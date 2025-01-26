@@ -1,8 +1,8 @@
-const AWS = requir('aws-sdk');
+const AWS = require('aws-sdk');
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const { v4: uuidv4 } = require('uuid');
 
-const PRODUCT_TABLE = "products"
+const PRODUCT_TABLE = "Products"
 
 exports.create = async (event) => 
 {
@@ -22,6 +22,7 @@ exports.create = async (event) =>
             TableName: PRODUCT_TABLE,
             Item: product
         }).promise();
+
         return {
             statusCode: 201,
             body: JSON.stringify(product)

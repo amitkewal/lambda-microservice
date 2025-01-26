@@ -72,7 +72,7 @@ resources:
   ProductsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: ${self:provider.environment.PRODUCTS_TABLE}
+      TableName: ${self:provider.environment.PRODUCTS_TABLE_NAME}
       KeySchema:
         - AttributeName: ProductId
           KeyType: HASH
