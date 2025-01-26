@@ -1,0 +1,115 @@
+service: ecommerse-products-api
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: ap-south-1
+  accountId: 123456789012
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamo:Query
+        - dynamo:Scan
+        - dynamo:GetItem
+        - dynamo:PutItem
+        - dynamo:UpdateItem
+        - dynamo:DeleteItem
+      Resource:
+        - "arn:aws:dynamodb:${self.provider.region}:${self.provider.accountId}:table/ecommerce-products"
+        - "arn:aws:dynamodb:${self.provider.region}:${self.provider.accountId}:table/ecommerce-products/*"
+        - "arn:aws:dynamodb:${self.provider.region}:${self.provider.accountId}:table/ProductTaxonomyAttributes/*"
+
+  environment:
+    PRODUCTS_TABLE_NAME: "Products"
+    PRODUCTS_TAXANOMY_TABLE_NAME: "ProductTaxonomyAttributes"
+
+functions:
+  getProducts:
+    handler: src/handlers/product.get
+    events:
+      - http:
+          path: products/{id}
+          method: get
+          cors: true
+
+  createProduct:
+    handler: src/handlers/product.create
+    events:
+      - http:
+          path: products
+          method: post
+          cors: true
+
+  updateProduct:
+    handler: src/handlers/product.update
+    events:
+      - http:
+        path: products/{id}
+        method: put
+        cors: true
+
+  deleteProduct:
+    handler: src/handlers/product.delete
+    events:
+      - http:
+        path: products/{id}
+        method: delete
+        cors: true
+
+
+resources:
+# Product Data Model in DynamoDB
+# Table Name: Products
+# ProductId : Unique identifier for each product.
+# Name : Name of the product.
+# Description : A detailed description of the product.
+# Price : The price of the product.
+# Category : Category to which the product belongs.
+# Stock : Inventory count.
+# CreatedAt : Timestamp when the product was added.
+# UpdatedAt : Timestamp of the last update to the product.
+
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:provider.environment.PRODUCTS_TABLE}
+      KeySchema:
+        - AttributeName: ProductId
+          KeyType: HASH
+      AttributeDefinitions:
+        - AttributeName: ProductId
+          AttributeType: S
+
+# Table Name: ProductTaxonomyAttributes
+
+# TaxonomyId : A unique identifier for each category or tag.
+# Name : The name of the category or tag.
+# Description : A brief description of the category or tag.
+# ParentId : An identifier linking to the parent category for hierarchical structures. For top-level categories, this could be null or a specific value like "root".
+# Type : Distinguishes between different types of taxonomy, such as 'category' or 'tag'.
+  ProductTaxonomyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:provider.environment.PRODUCTS_TAXANOMY_TABLE_NAME}
+      KeySchema:
+        - AttributeName: TaxonomyId
+          KeyType: HASH
+      AttributeDefinitions:
+        - AttributeName: TaxonomyId
+          AttributeType: S
+        - AttributeName: ParentId
+          AttributeType: S
+        - AttributeName: Name
+          AttributeType: S
+        - AttributeName: Description
+          AttributeType: S
+        - AttributeName: Type
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: ParentIdIndex
+          KeySchema:
+            - AttributeName: ParentId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
